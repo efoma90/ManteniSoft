@@ -1,0 +1,16 @@
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Configuración local del editor
+.vscode/
+.idea/
+
+# Archivos temporales y copias
+*.tmp
+*.bak
+*.log
+
+# Dependencias (si se agregan en el futuro)
+node_modules/
