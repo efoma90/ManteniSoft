@@ -27,6 +27,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid #9bc4f5; border-c
 .primary { background: #2468a8; color: white; }
 .primary:hover { background: #1b548b; }
 .message { display: inline-block; margin: 0 0 0 12px; color: #26734d; font-size: 13px; }
+.message.error {  color: #c0392b;  font-weight: 600;}
 .filter-label { min-width: 180px; }
 .request-list { display: grid; gap: 12px; margin-top: 20px; }
 .request-card { border: 1px solid #e1e6ed; border-radius: 10px; padding: 16px; display: grid; grid-template-columns: 1fr auto; gap: 12px; }
