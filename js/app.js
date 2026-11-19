@@ -72,11 +72,39 @@ function renderRequests() {
   document.getElementById("doneCount").textContent = requests.filter(x => x.status === "Finalizada").length;
 }
 
+
 form.addEventListener("submit", event => {
   event.preventDefault();
-  const title = document.getElementById("title").value.trim();
-  const description = document.getElementById("description").value.trim();
-  if (!title || !description) return;
+
+  const titleInput = document.getElementById("title");
+  const descriptionInput = document.getElementById("description");
+  const message = document.getElementById("formMessage");
+
+  const title = titleInput.value.trim();
+  const description = descriptionInput.value.trim();
+
+  // Limpiar validaciones anteriores
+  titleInput.removeAttribute("aria-invalid");
+  descriptionInput.removeAttribute("aria-invalid");
+  message.classList.remove("error");
+
+  // Validar el título
+  if (!title) {
+    message.textContent = "Por favor, escribe el título de la solicitud.";
+    message.classList.add("error");
+    titleInput.setAttribute("aria-invalid", "true");
+    titleInput.focus();
+    return;
+  }
+
+  // Validar la descripción
+  if (!description) {
+    message.textContent = "Por favor, escribe una descripción de la solicitud.";
+    message.classList.add("error");
+    descriptionInput.setAttribute("aria-invalid", "true");
+    descriptionInput.focus();
+    return;
+  }
 
   requests.unshift({
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
@@ -87,12 +115,20 @@ form.addEventListener("submit", event => {
     status: "Pendiente",
     createdAt: new Date().toLocaleDateString("es-CO")
   });
+
   saveRequests();
   form.reset();
-  document.getElementById("formMessage").textContent = "Solicitud registrada correctamente.";
+
+  message.textContent = "Solicitud registrada correctamente.";
+  message.classList.remove("error");
+
   renderRequests();
-  setTimeout(() => document.getElementById("formMessage").textContent = "", 2500);
+
+  setTimeout(() => {
+    message.textContent = "";
+  }, 2500);
 });
+
 
 function updateStatus(id, status) {
   requests = requests.map(item => item.id === id ? { ...item, status } : item);
