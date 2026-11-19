@@ -17,9 +17,17 @@ function saveRequests() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
 }
 
+
 function renderRequests() {
   const filter = statusFilter.value;
-  const visible = requests.filter(item => filter === "Todas" || item.status === filter);
+
+  // Mostrar primero las solicitudes más recientes
+  const sortedRequests = [...requests].reverse();
+
+  const visible = sortedRequests.filter(
+    item => filter === "Todas" || item.status === filter
+  );
+
   requestList.innerHTML = "";
   emptyState.hidden = visible.length > 0;
 
@@ -28,24 +36,48 @@ function renderRequests() {
     card.className = "request-card";
 
     const content = document.createElement("div");
+
     const title = document.createElement("h3");
     title.textContent = item.title;
+
     const description = document.createElement("p");
     description.textContent = item.description;
+
+    // Información de la solicitud
     const meta = document.createElement("div");
     meta.className = "meta";
-    [item.type, `Prioridad: ${item.priority}`, `Creada: ${item.createdAt}`].forEach(value => {
+
+    [
+      item.type,
+      `Prioridad: ${item.priority}`,
+      `Creada: ${item.createdAt}`
+    ].forEach(value => {
       const pill = document.createElement("span");
       pill.className = "pill";
       pill.textContent = value;
       meta.appendChild(pill);
     });
-    content.append(title, description, meta);
+
+    // Mostrar el estado de la solicitud
+    const statusBadge = document.createElement("span");
+    statusBadge.className =
+      `status-badge status-${item.status.toLowerCase().replace(" ", "-")}`;
+    statusBadge.textContent = item.status;
+
+    // Mostrar la prioridad de forma visual
+    const priorityBadge = document.createElement("span");
+    priorityBadge.className =
+      `priority-badge priority-${item.priority.toLowerCase()}`;
+    priorityBadge.textContent = `Prioridad ${item.priority}`;
+
+    content.append(title, description, meta, statusBadge, priorityBadge);
 
     const actions = document.createElement("div");
     actions.className = "actions";
+
     const select = document.createElement("select");
     select.setAttribute("aria-label", `Estado de ${item.title}`);
+
     ["Pendiente", "En proceso", "Finalizada"].forEach(status => {
       const option = document.createElement("option");
       option.value = status;
@@ -53,18 +85,24 @@ function renderRequests() {
       option.selected = item.status === status;
       select.appendChild(option);
     });
-    select.addEventListener("change", () => updateStatus(item.id, select.value));
+
+    select.addEventListener("change", () => {
+      updateStatus(item.id, select.value);
+    });
 
     const removeButton = document.createElement("button");
     removeButton.className = "delete";
     removeButton.type = "button";
     removeButton.textContent = "Eliminar";
-    removeButton.addEventListener("click", () => deleteRequest(item.id));
+    removeButton.addEventListener("click", () => {
+      deleteRequest(item.id);
+    });
 
     actions.append(select, removeButton);
     card.append(content, actions);
     requestList.appendChild(card);
   });
+}
 
   document.getElementById("totalCount").textContent = requests.length;
   document.getElementById("pendingCount").textContent = requests.filter(x => x.status === "Pendiente").length;
