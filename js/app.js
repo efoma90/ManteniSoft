@@ -1,9 +1,16 @@
 const STORAGE_KEY = "mantenisoft_requests";
+const VALID_STATUSES = ["Pendiente", "En proceso", "Finalizada"];
 const form = document.getElementById("requestForm");
 const requestList = document.getElementById("requestList");
 const emptyState = document.getElementById("emptyState");
 const statusFilter = document.getElementById("statusFilter");
+const actionMessage = document.getElementById("actionMessage");
 let requests = loadRequests();
+
+function showActionMessage(text, isError = false) {
+  actionMessage.textContent = text;
+  actionMessage.classList.toggle("error", isError);
+}
 
 function loadRequests() {
   try {
@@ -22,7 +29,7 @@ function renderRequests() {
   const filter = statusFilter.value;
 
   // Mostrar primero las solicitudes más recientes
-  const sortedRequests = [...requests].reverse();
+  const sortedRequests = [...requests];
 
   const visible = sortedRequests.filter(
     item => filter === "Todas" || item.status === filter
@@ -30,10 +37,14 @@ function renderRequests() {
 
   requestList.innerHTML = "";
   emptyState.hidden = visible.length > 0;
+  emptyState.textContent = requests.length === 0
+    ? "Todavía no hay solicitudes registradas."
+    : "No hay solicitudes con el estado seleccionado.";
 
   visible.forEach(item => {
     const card = document.createElement("article");
     card.className = "request-card";
+    card.dataset.requestId = item.id;
 
     const content = document.createElement("div");
 
@@ -78,7 +89,7 @@ function renderRequests() {
     const select = document.createElement("select");
     select.setAttribute("aria-label", `Estado de ${item.title}`);
 
-    ["Pendiente", "En proceso", "Finalizada"].forEach(status => {
+    VALID_STATUSES.forEach(status => {
       const option = document.createElement("option");
       option.value = status;
       option.textContent = status;
@@ -102,7 +113,6 @@ function renderRequests() {
     card.append(content, actions);
     requestList.appendChild(card);
   });
-}
 
   document.getElementById("totalCount").textContent = requests.length;
   document.getElementById("pendingCount").textContent = requests.filter(x => x.status === "Pendiente").length;
@@ -169,9 +179,19 @@ form.addEventListener("submit", event => {
 
 
 function updateStatus(id, status) {
+  const current = requests.find(item => item.id === id);
+  if (!current || !VALID_STATUSES.includes(status)) {
+    showActionMessage("No se pudo cambiar el estado de la solicitud.", true);
+    return false;
+  }
+  if (current.status === status) return true;
   requests = requests.map(item => item.id === id ? { ...item, status } : item);
   saveRequests();
   renderRequests();
+  showActionMessage(`La solicitud "${current.title}" cambió a ${status}.`);
+  const card = [...requestList.children].find(node => node.dataset.requestId === id);
+  (card ? card.querySelector("select") : statusFilter).focus();
+  return true;
 }
 
 function deleteRequest(id) {
