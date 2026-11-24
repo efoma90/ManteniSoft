@@ -105,6 +105,7 @@ function renderRequests() {
     removeButton.className = "delete";
     removeButton.type = "button";
     removeButton.textContent = "Eliminar";
+    removeButton.setAttribute("aria-label", `Eliminar solicitud ${item.title}`);
     removeButton.addEventListener("click", () => {
       deleteRequest(item.id);
     });
@@ -196,10 +197,20 @@ function updateStatus(id, status) {
 
 function deleteRequest(id) {
   const item = requests.find(request => request.id === id);
-  if (!item || !confirm(`¿Deseas eliminar la solicitud "${item.title}"?`)) return;
+  if (!item) {
+    showActionMessage("La solicitud ya no está disponible.", true);
+    return false;
+  }
+  if (!confirm(`¿Deseas eliminar la solicitud "${item.title}"? Esta acción no se puede deshacer.`)) {
+    showActionMessage(`Eliminación cancelada. La solicitud "${item.title}" se conserva.`);
+    return false;
+  }
   requests = requests.filter(request => request.id !== id);
   saveRequests();
   renderRequests();
+  showActionMessage(`La solicitud "${item.title}" fue eliminada correctamente.`);
+  statusFilter.focus();
+  return true;
 }
 
 statusFilter.addEventListener("change", renderRequests);

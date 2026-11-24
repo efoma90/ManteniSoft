@@ -36,6 +36,10 @@
 - Cada solicitud tiene una opción para eliminar.
 - Antes de eliminar, se solicita confirmación.
 - Si se cancela la confirmación, el registro permanece.
+- Al confirmar, se actualizan el listado y los contadores.
+- Se informa si la eliminación se completó o se canceló.
+
+**Aporte de mantenimiento:** Nicolás Chesini Martin (`chesco-art`), con asistencia de IA. Se mejoró la confirmación, se añadieron mensajes de resultado y se verificó la conservación de registros al cancelar.
 
 ## HU-05. Conservar la información
 **Como** usuario, **quiero** que las solicitudes permanezcan guardadas al cerrar o actualizar la página, **para** no perder la información registrada.
