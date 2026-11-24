@@ -48,6 +48,10 @@
 - Los registros se guardan en LocalStorage.
 - Al recargar la página, se recuperan los registros.
 - Los cambios de estado y eliminaciones también se guardan.
+- Si el navegador no permite guardar, el cambio no se aplica y se informa el error.
+- Si los datos guardados tienen un formato incorrecto, se conservan sin sobrescribirlos.
+
+**Aporte de mantenimiento:** Nicolás Chesini Martin (`chesco-art`), con asistencia de IA. Se validó la información recuperada y se protegieron las operaciones de registro, actualización y eliminación frente a errores de almacenamiento.
 
 ## Alcance y limitación
 
