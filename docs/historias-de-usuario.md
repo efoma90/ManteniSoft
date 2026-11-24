@@ -23,6 +23,11 @@
 - Se puede seleccionar Pendiente, En proceso o Finalizada.
 - El cambio se refleja en el resumen de estados.
 - El nuevo estado se conserva al actualizar la página.
+- Se informa el resultado del cambio mediante un mensaje accesible.
+- Un estado no permitido no modifica la solicitud.
+- Si el cambio excluye una solicitud del filtro actual, el foco vuelve al filtro.
+
+**Aporte de mantenimiento:** Nicolás Chesini Martin (`chesco-art`), con asistencia de IA. Se corrigió el cierre de `renderRequests()`, se restituyó la actualización de contadores y se agregó validación y confirmación del cambio de estado. También se corrigió la inversión del orden de HU-02: el registro más reciente aparece primero.
 
 ## HU-04. Eliminar una solicitud
 **Como** usuario, **quiero** eliminar una solicitud, **para** retirar registros que ya no sean necesarios.
