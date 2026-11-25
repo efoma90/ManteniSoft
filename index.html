@@ -24,6 +24,8 @@
       <p>Registra errores, mejoras y actualizaciones para llevar un seguimiento sencillo de cada solicitud.</p>
     </section>
 
+    <p id="storageMessage" class="message error storage-message" role="alert"></p>
+
     <section class="summary" aria-label="Resumen de solicitudes">
       <article class="summary-card"><span>Total</span><strong id="totalCount">0</strong></article>
       <article class="summary-card"><span>Pendientes</span><strong id="pendingCount">0</strong></article>
@@ -35,7 +37,7 @@
       <div class="section-heading">
         <div><h2>Nueva solicitud</h2><p>Completa los datos para registrar una solicitud.</p></div>
       </div>
-      <form id="requestForm">
+      <form id="requestForm" novalidate>
         <div class="form-grid">
           <label>Título
             <input id="title" name="title" maxlength="80" required placeholder="Ej. Error al iniciar sesión">
@@ -76,6 +78,7 @@
           </select>
         </label>
       </div>
+      <p id="actionMessage" class="message action-message" role="status" aria-live="polite" aria-atomic="true"></p>
       <div id="requestList" class="request-list" aria-live="polite"></div>
       <p id="emptyState" class="empty-state">Todavía no hay solicitudes registradas.</p>
     </section>

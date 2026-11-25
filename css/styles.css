@@ -27,6 +27,11 @@ input:focus, select:focus, textarea:focus { outline: 2px solid #9bc4f5; border-c
 .primary { background: #2468a8; color: white; }
 .primary:hover { background: #1b548b; }
 .message { display: inline-block; margin: 0 0 0 12px; color: #26734d; font-size: 13px; }
+.message.error {  color: #c0392b;  font-weight: 600;}
+.action-message { display: block; margin: 14px 0 0; line-height: 1.5; }
+.action-message:empty { display: none; }
+.storage-message { display: block; margin: 0 0 20px; line-height: 1.5; }
+.storage-message:empty { display: none; }
 .filter-label { min-width: 180px; }
 .request-list { display: grid; gap: 12px; margin-top: 20px; }
 .request-card { border: 1px solid #e1e6ed; border-radius: 10px; padding: 16px; display: grid; grid-template-columns: 1fr auto; gap: 12px; }
@@ -46,4 +51,47 @@ footer { color: #7a8796; font-size: 12px; padding: 20px 0 30px; }
   .topbar-content, .list-heading { align-items: flex-start; flex-direction: column; }
   .request-card { grid-template-columns: 1fr; }
   .actions { flex-wrap: wrap; }
+}
+
+/* Etiquetas de estado de las solicitudes */
+.status-badge,
+.priority-badge {
+  display: inline-block;
+  width: fit-content;
+  padding: 5px 10px;
+  margin-top: 8px;
+  margin-right: 6px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pendiente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-en-proceso {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.status-finalizada {
+  background: #d4edda;
+  color: #155724;
+}
+
+.priority-alta {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.priority-media {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.priority-baja {
+  background: #d1ecf1;
+  color: #0c5460;
 }
