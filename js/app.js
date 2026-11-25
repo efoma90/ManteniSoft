@@ -5,6 +5,8 @@ const requestList = document.getElementById("requestList");
 const emptyState = document.getElementById("emptyState");
 const statusFilter = document.getElementById("statusFilter");
 const actionMessage = document.getElementById("actionMessage");
+const storageMessage = document.getElementById("storageMessage");
+let storageReadFailed = false;
 let requests = loadRequests();
 
 function showActionMessage(text, isError = false) {
@@ -14,14 +16,39 @@ function showActionMessage(text, isError = false) {
 
 function loadRequests() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === null) return [];
+    const parsed = JSON.parse(stored);
+    const isRequest = item => item && typeof item === "object"
+      && typeof item.id === "string" && item.id.length > 0
+      && typeof item.title === "string" && item.title.trim().length > 0
+      && typeof item.description === "string"
+      && typeof item.type === "string"
+      && ["Alta", "Media", "Baja"].includes(item.priority)
+      && VALID_STATUSES.includes(item.status)
+      && typeof item.createdAt === "string";
+    if (!Array.isArray(parsed) || !parsed.every(isRequest)
+      || new Set(parsed.map(item => item.id)).size !== parsed.length) {
+      throw new Error("Formato de solicitudes no válido");
+    }
+    return parsed;
   } catch {
+    storageReadFailed = true;
+    storageMessage.textContent = "No pudimos recuperar tus solicitudes. Para proteger los datos guardados, los cambios están bloqueados. Vuelve a cargar la página; si el problema continúa, solicita ayuda.";
     return [];
   }
 }
 
-function saveRequests() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
+function saveRequests(nextRequests) {
+  if (storageReadFailed) return false;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextRequests));
+    storageMessage.textContent = "";
+    return true;
+  } catch {
+    storageMessage.textContent = "No se pudo guardar el cambio. No se aplicó la modificación y los datos anteriores se conservan. Comprueba que el navegador permita guardar datos y vuelve a intentarlo.";
+    return false;
+  }
 }
 
 
@@ -136,6 +163,7 @@ form.addEventListener("submit", event => {
   titleInput.removeAttribute("aria-invalid");
   descriptionInput.removeAttribute("aria-invalid");
   message.classList.remove("error");
+  message.textContent = "";
 
   // Validar el título
   if (!title) {
@@ -155,7 +183,7 @@ form.addEventListener("submit", event => {
     return;
   }
 
-  requests.unshift({
+  const nextRequests = [{
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     title,
     description,
@@ -163,9 +191,10 @@ form.addEventListener("submit", event => {
     priority: document.getElementById("priority").value,
     status: "Pendiente",
     createdAt: new Date().toLocaleDateString("es-CO")
-  });
+  }, ...requests];
 
-  saveRequests();
+  if (!saveRequests(nextRequests)) return;
+  requests = nextRequests;
   form.reset();
 
   message.textContent = "Solicitud registrada correctamente.";
@@ -186,8 +215,13 @@ function updateStatus(id, status) {
     return false;
   }
   if (current.status === status) return true;
-  requests = requests.map(item => item.id === id ? { ...item, status } : item);
-  saveRequests();
+  const nextRequests = requests.map(item => item.id === id ? { ...item, status } : item);
+  if (!saveRequests(nextRequests)) {
+    renderRequests();
+    showActionMessage("El cambio de estado no se aplicó.", true);
+    return false;
+  }
+  requests = nextRequests;
   renderRequests();
   showActionMessage(`La solicitud "${current.title}" cambió a ${status}.`);
   const card = [...requestList.children].find(node => node.dataset.requestId === id);
@@ -205,8 +239,12 @@ function deleteRequest(id) {
     showActionMessage(`Eliminación cancelada. La solicitud "${item.title}" se conserva.`);
     return false;
   }
-  requests = requests.filter(request => request.id !== id);
-  saveRequests();
+  const nextRequests = requests.filter(request => request.id !== id);
+  if (!saveRequests(nextRequests)) {
+    showActionMessage("La solicitud no se eliminó porque no se pudo guardar el cambio.", true);
+    return false;
+  }
+  requests = nextRequests;
   renderRequests();
   showActionMessage(`La solicitud "${item.title}" fue eliminada correctamente.`);
   statusFilter.focus();
