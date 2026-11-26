@@ -18,11 +18,13 @@ function saveRequests() {
 }
 
 
+
 function renderRequests() {
   const filter = statusFilter.value;
 
   // Mostrar primero las solicitudes más recientes
-  const sortedRequests = [...requests].reverse();
+  // Las nuevas se agregan al inicio con unshift()
+  const sortedRequests = [...requests];
 
   const visible = sortedRequests.filter(
     item => filter === "Todas" || item.status === filter
@@ -94,6 +96,7 @@ function renderRequests() {
     removeButton.className = "delete";
     removeButton.type = "button";
     removeButton.textContent = "Eliminar";
+
     removeButton.addEventListener("click", () => {
       deleteRequest(item.id);
     });
@@ -102,13 +105,20 @@ function renderRequests() {
     card.append(content, actions);
     requestList.appendChild(card);
   });
+
+  // Actualizar los contadores
+  document.getElementById("totalCount").textContent = requests.length;
+
+  document.getElementById("pendingCount").textContent =
+    requests.filter(x => x.status === "Pendiente").length;
+
+  document.getElementById("progressCount").textContent =
+    requests.filter(x => x.status === "En proceso").length;
+
+  document.getElementById("doneCount").textContent =
+    requests.filter(x => x.status === "Finalizada").length;
 }
 
-  document.getElementById("totalCount").textContent = requests.length;
-  document.getElementById("pendingCount").textContent = requests.filter(x => x.status === "Pendiente").length;
-  document.getElementById("progressCount").textContent = requests.filter(x => x.status === "En proceso").length;
-  document.getElementById("doneCount").textContent = requests.filter(x => x.status === "Finalizada").length;
-}
 
 
 form.addEventListener("submit", event => {
