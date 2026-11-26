@@ -1,20 +1,54 @@
 const STORAGE_KEY = "mantenisoft_requests";
+const VALID_STATUSES = ["Pendiente", "En proceso", "Finalizada"];
 const form = document.getElementById("requestForm");
 const requestList = document.getElementById("requestList");
 const emptyState = document.getElementById("emptyState");
 const statusFilter = document.getElementById("statusFilter");
+const actionMessage = document.getElementById("actionMessage");
+const storageMessage = document.getElementById("storageMessage");
+let storageReadFailed = false;
 let requests = loadRequests();
+
+function showActionMessage(text, isError = false) {
+  actionMessage.textContent = text;
+  actionMessage.classList.toggle("error", isError);
+}
 
 function loadRequests() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === null) return [];
+    const parsed = JSON.parse(stored);
+    const isRequest = item => item && typeof item === "object"
+      && typeof item.id === "string" && item.id.length > 0
+      && typeof item.title === "string" && item.title.trim().length > 0
+      && typeof item.description === "string"
+      && typeof item.type === "string"
+      && ["Alta", "Media", "Baja"].includes(item.priority)
+      && VALID_STATUSES.includes(item.status)
+      && typeof item.createdAt === "string";
+    if (!Array.isArray(parsed) || !parsed.every(isRequest)
+      || new Set(parsed.map(item => item.id)).size !== parsed.length) {
+      throw new Error("Formato de solicitudes no válido");
+    }
+    return parsed;
   } catch {
+    storageReadFailed = true;
+    storageMessage.textContent = "No pudimos recuperar tus solicitudes. Para proteger los datos guardados, los cambios están bloqueados. Vuelve a cargar la página; si el problema continúa, solicita ayuda.";
     return [];
   }
 }
 
-function saveRequests() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
+function saveRequests(nextRequests) {
+  if (storageReadFailed) return false;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextRequests));
+    storageMessage.textContent = "";
+    return true;
+  } catch {
+    storageMessage.textContent = "No se pudo guardar el cambio. No se aplicó la modificación y los datos anteriores se conservan. Comprueba que el navegador permita guardar datos y vuelve a intentarlo.";
+    return false;
+  }
 }
 
 
@@ -23,7 +57,7 @@ function renderRequests() {
   const filter = statusFilter.value;
 
   // Mostrar primero las solicitudes más recientes
-  // Las nuevas se agregan al inicio con unshift()
+
   const sortedRequests = [...requests];
 
   const visible = sortedRequests.filter(
@@ -32,10 +66,14 @@ function renderRequests() {
 
   requestList.innerHTML = "";
   emptyState.hidden = visible.length > 0;
+  emptyState.textContent = requests.length === 0
+    ? "Todavía no hay solicitudes registradas."
+    : "No hay solicitudes con el estado seleccionado.";
 
   visible.forEach(item => {
     const card = document.createElement("article");
     card.className = "request-card";
+    card.dataset.requestId = item.id;
 
     const content = document.createElement("div");
 
@@ -80,7 +118,7 @@ function renderRequests() {
     const select = document.createElement("select");
     select.setAttribute("aria-label", `Estado de ${item.title}`);
 
-    ["Pendiente", "En proceso", "Finalizada"].forEach(status => {
+    VALID_STATUSES.forEach(status => {
       const option = document.createElement("option");
       option.value = status;
       option.textContent = status;
@@ -96,7 +134,7 @@ function renderRequests() {
     removeButton.className = "delete";
     removeButton.type = "button";
     removeButton.textContent = "Eliminar";
-
+    removeButton.setAttribute("aria-label", `Eliminar solicitud ${item.title}`);
     removeButton.addEventListener("click", () => {
       deleteRequest(item.id);
     });
@@ -135,6 +173,7 @@ form.addEventListener("submit", event => {
   titleInput.removeAttribute("aria-invalid");
   descriptionInput.removeAttribute("aria-invalid");
   message.classList.remove("error");
+  message.textContent = "";
 
   // Validar el título
   if (!title) {
@@ -154,7 +193,7 @@ form.addEventListener("submit", event => {
     return;
   }
 
-  requests.unshift({
+  const nextRequests = [{
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     title,
     description,
@@ -162,9 +201,10 @@ form.addEventListener("submit", event => {
     priority: document.getElementById("priority").value,
     status: "Pendiente",
     createdAt: new Date().toLocaleDateString("es-CO")
-  });
+  }, ...requests];
 
-  saveRequests();
+  if (!saveRequests(nextRequests)) return;
+  requests = nextRequests;
   form.reset();
 
   message.textContent = "Solicitud registrada correctamente.";
@@ -179,17 +219,46 @@ form.addEventListener("submit", event => {
 
 
 function updateStatus(id, status) {
-  requests = requests.map(item => item.id === id ? { ...item, status } : item);
-  saveRequests();
+  const current = requests.find(item => item.id === id);
+  if (!current || !VALID_STATUSES.includes(status)) {
+    showActionMessage("No se pudo cambiar el estado de la solicitud.", true);
+    return false;
+  }
+  if (current.status === status) return true;
+  const nextRequests = requests.map(item => item.id === id ? { ...item, status } : item);
+  if (!saveRequests(nextRequests)) {
+    renderRequests();
+    showActionMessage("El cambio de estado no se aplicó.", true);
+    return false;
+  }
+  requests = nextRequests;
   renderRequests();
+  showActionMessage(`La solicitud "${current.title}" cambió a ${status}.`);
+  const card = [...requestList.children].find(node => node.dataset.requestId === id);
+  (card ? card.querySelector("select") : statusFilter).focus();
+  return true;
 }
 
 function deleteRequest(id) {
   const item = requests.find(request => request.id === id);
-  if (!item || !confirm(`¿Deseas eliminar la solicitud "${item.title}"?`)) return;
-  requests = requests.filter(request => request.id !== id);
-  saveRequests();
+  if (!item) {
+    showActionMessage("La solicitud ya no está disponible.", true);
+    return false;
+  }
+  if (!confirm(`¿Deseas eliminar la solicitud "${item.title}"? Esta acción no se puede deshacer.`)) {
+    showActionMessage(`Eliminación cancelada. La solicitud "${item.title}" se conserva.`);
+    return false;
+  }
+  const nextRequests = requests.filter(request => request.id !== id);
+  if (!saveRequests(nextRequests)) {
+    showActionMessage("La solicitud no se eliminó porque no se pudo guardar el cambio.", true);
+    return false;
+  }
+  requests = nextRequests;
   renderRequests();
+  showActionMessage(`La solicitud "${item.title}" fue eliminada correctamente.`);
+  statusFilter.focus();
+  return true;
 }
 
 statusFilter.addEventListener("change", renderRequests);
