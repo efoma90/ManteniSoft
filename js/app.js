@@ -52,10 +52,12 @@ function saveRequests(nextRequests) {
 }
 
 
+
 function renderRequests() {
   const filter = statusFilter.value;
 
   // Mostrar primero las solicitudes más recientes
+
   const sortedRequests = [...requests];
 
   const visible = sortedRequests.filter(
@@ -142,11 +144,19 @@ function renderRequests() {
     requestList.appendChild(card);
   });
 
+  // Actualizar los contadores
   document.getElementById("totalCount").textContent = requests.length;
-  document.getElementById("pendingCount").textContent = requests.filter(x => x.status === "Pendiente").length;
-  document.getElementById("progressCount").textContent = requests.filter(x => x.status === "En proceso").length;
-  document.getElementById("doneCount").textContent = requests.filter(x => x.status === "Finalizada").length;
+
+  document.getElementById("pendingCount").textContent =
+    requests.filter(x => x.status === "Pendiente").length;
+
+  document.getElementById("progressCount").textContent =
+    requests.filter(x => x.status === "En proceso").length;
+
+  document.getElementById("doneCount").textContent =
+    requests.filter(x => x.status === "Finalizada").length;
 }
+
 
 
 form.addEventListener("submit", event => {
